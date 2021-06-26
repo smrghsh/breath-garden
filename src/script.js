@@ -4,18 +4,19 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
 import { MeshLine, MeshLineMaterial, MeshLineRaycast } from 'three.meshline'
 import { Scene } from 'three'
-
+import desertGroundVertexShader from './shaders/desertGround/vertex.glsl'
+import desertGroundFragmentShader from './shaders/desertGround/fragment.glsl'
 // /**
 //  * Base
 //  */
 // // Debug
-// const gui = new dat.GUI()
+const gui = new dat.GUI()
 
 var capturer = new CCapture( { 
     format: 'webm',
     name: 'lightning'
 } );
-var captureFlag = true
+var captureFlag = false
 
 
 // Canvas
@@ -23,6 +24,13 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+{
+    const near = 1;
+    const far = 2;
+    const color = 'lightblue';
+    scene.fog = new THREE.Fog(color, near, far);
+    scene.background = new THREE.Color(color);
+  }
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
 scene.add(ambientLight)
 
@@ -37,40 +45,58 @@ directionalLight.shadow.camera.bottom = - 7
 directionalLight.position.set(5, 5, 5)
 scene.add(directionalLight)
 
+scene.add(new THREE.AxesHelper())
+const desertGroundGeometry = new THREE.PlaneGeometry(50,50,1024,1024)
 
 
+/*
+Creates floor
+*/
 
-const lines = []
-
-var createLine = function(){
-    const points = [];
-    for (let j = -100; j < 100; j+= Math.random() * 3) {
-        points.push(j,Math.random(), 0);
-    }
-
-    const line = new MeshLine();
-    line.setPoints(points);
-
-    const material = new MeshLineMaterial({color: 'red',sizeAttenuation: 1, lineWidth: 0.1});
-    return new THREE.Mesh(line, material);
+const debugObject = {
+    depthColor: '#000000',
+    surfaceColor: '#CEB371'
 }
-
-for (var i = 0; i < 36; i++){
-    lines.push(createLine())
-    lines[i].rotation.z += ( (2 * Math.PI)/36) * (i+1)
-    lines[i].rotation.y += (Math.random() * 2 - 1)/2
-}
-
-
-
-lines.forEach( (e,i) =>{
-    scene.add(e)
+gui.addColor(debugObject, 'depthColor').name('depthColor').onChange(()=>{
+    desertGroundMaterial.uniforms.uDepthColor.value.set(debugObject.depthColor)
+})
+gui.addColor(debugObject, 'surfaceColor').name('surfaceColor').onChange(()=>{
+    desertGroundMaterial.uniforms.uSurfaceColor.value.set(debugObject.surfaceColor)
 })
 
-var centerSphereGeometry = new THREE.SphereGeometry(4,32,32)
-var centerSphereMaterial = new THREE.MeshBasicMaterial({color:'black'})
-var center = new THREE.Mesh(centerSphereGeometry,centerSphereMaterial)
-scene.add(center)
+
+const desertGroundMaterial = new THREE.ShaderMaterial({
+    vertexShader: desertGroundVertexShader,
+    fragmentShader: desertGroundFragmentShader,
+    uniforms:
+    {
+        uTime: {value: 0.0},
+        uBigWavesSpeed: { value: 0.5 },
+        uBigWavesElevation: { value: 0.12 },
+        uBigWavesFrequency: { value: new THREE.Vector2(2,2)},
+        uDepthColor: { value: new THREE.Color(debugObject.depthColor)},
+        uSurfaceColor: { value: new THREE.Color(debugObject.surfaceColor)},
+        uColorOffset: {value: 0.2},
+        uColorMultiplier: {value: 0.25},
+        uSmallWavesElevation: { value: 0.05 },
+        uSmallWavesFrequency: { value: 3 },
+        uSmallWavesSpeed: { value: 0.2 },
+        uSmallIterations: { value: 4 },
+        uFogRadius: {value: 10.0},
+        uFogDropoff: {value: 10.0}
+    },
+    transparent: true
+
+})
+
+const desertGround = new THREE.Mesh(desertGroundGeometry,desertGroundMaterial)
+desertGround.rotation.x += Math.PI * 1.5
+
+
+scene.add(desertGround)
+
+
+gui.add(desertGroundMaterial.uniforms.uFogDropoff, 'value').min(0).max(100).step(1).name('uFogDropoff')
 
 
 // scene.add(createLine())
@@ -79,15 +105,17 @@ scene.add(center)
  * Sizes
  */
  const sizes = {
-    width: 1080,   //twitter portrait 720, insta portrait width 
-    height: 1080
+    width: window.innerWidth,
+    height: window.innerHeight
 }
 /**
  * Camera
  */
 // Base camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.z = 20
+camera.position.z = 0.2
+camera.position.y = 5.0
+camera.position.z = 3
 scene.add(camera)
 
 // Controls
@@ -118,9 +146,7 @@ const tick = () =>
     // Update controls
     controls.update()
 
-    camera.position.z = 20
-    camera.position.x = 5 * Math.sin(elapsedTime)
-    camera.position.y = 2 * Math.sin(elapsedTime)
+
 
     if (elapsedTime > 2 * Math.PI && captureFlag){
         capturer.stop()
