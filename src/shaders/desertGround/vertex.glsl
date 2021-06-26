@@ -1,5 +1,5 @@
 uniform float uTime;
-uniform float uBigWavesSpeed;
+// uniform float uBigWavesSpeed;
 uniform float uBigWavesElevation;
 uniform vec2 uBigWavesFrequency;
 uniform float uSmallWavesElevation;
@@ -8,6 +8,8 @@ uniform float uSmallWavesSpeed;
 uniform float uSmallIterations;
 uniform float uFogRadius;
 uniform float uFogDropoff;
+uniform float uRiverOffset;
+uniform float uRiverWidth;
 varying float vElevation;
 varying float vFog;
 
@@ -115,6 +117,19 @@ void main() {
     float elevation = 0.0;
     vec3 artifactEradicator = clamp(modelPosition.xyz,vec3(0.3),vec3(999999.9));
     elevation += clamp(cnoise(artifactEradicator.xyz / (0.2 + artifactEradicator.xyz)),0.48,1.0);
+    
+
+    float center = cnoise(modelPosition.xyz/7.0) + uRiverOffset;
+    float width = uRiverWidth;
+    float falloff = 2.0; 
+    float leftBank = center - (width/2.0);
+    float rightBank = center +(width/2.0);
+    float river = smoothstep(leftBank - (0.3 * cnoise(modelPosition.xyz)),leftBank+falloff,modelPosition.x);
+    river -= smoothstep(rightBank-falloff, rightBank + (0.3 * cnoise(modelPosition.xyz)),modelPosition.x);
+
+
+
+    elevation -= river;
     for(float i = 1.0; i <= uSmallIterations; i++)
     {
         elevation -= abs(cnoise(vec3(modelPosition.xz * uSmallWavesFrequency * i, uTime * uSmallWavesSpeed)) * uSmallWavesElevation / i);
