@@ -8,6 +8,7 @@ import desertGroundVertexShader from './shaders/desertGround/vertex.glsl'
 import desertGroundFragmentShader from './shaders/desertGround/fragment.glsl'
 import invisisphereVertexShader from './shaders/invisisphere/vertex.glsl'
 import invisisphereFragmentShader from './shaders/invisisphere/fragment.glsl'
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 // /**
 //  * Base
 //  */
@@ -151,6 +152,9 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.xr.enabled = true;
+document.body.appendChild( VRButton.createButton( renderer ) );
+
 
 /**
  * Animate
@@ -167,10 +171,20 @@ const tick = () =>
     river.material.uniforms.uTime.value = elapsedTime;
 
     // Render
-    renderer.render(scene, camera)
+    // renderer.render(scene, camera)
 
     // Call tick again on the next frame
-    window.requestAnimationFrame(tick)
+    // window.requestAnimationFrame(tick)
 }
 
 tick()
+
+
+
+renderer.setAnimationLoop( function () {
+    tick()
+	renderer.render( scene, camera );
+
+} );
+
+
