@@ -12,12 +12,6 @@ import desertGroundFragmentShader from './shaders/desertGround/fragment.glsl'
 // // Debug
 const gui = new dat.GUI()
 
-var capturer = new CCapture( { 
-    format: 'webm',
-    name: 'lightning'
-} );
-var captureFlag = false
-
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -137,9 +131,6 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 const clock = new THREE.Clock()
 
 
-if (captureFlag){
-    capturer.start();
-}
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
@@ -148,19 +139,11 @@ const tick = () =>
 
 
 
-    if (elapsedTime > 2 * Math.PI && captureFlag){
-        capturer.stop()
-        capturer.save()
-        captureFlag = false;
-
-    }
-
     // Render
     renderer.render(scene, camera)
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
-    if(captureFlag){capturer.capture( canvas )}
 }
 
 tick()
