@@ -114,7 +114,8 @@ const invisisphereMaterial = new THREE.ShaderMaterial({
         uHoldMax: {value: 4.0},
         uLvl: {value: 1.0}
     },
-    depthWrite: false,
+    depthWrite: true,
+    depthTest: true,
     transparent: true,
     alphaTest: 0.5,
 })
